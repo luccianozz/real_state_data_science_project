@@ -13,12 +13,21 @@ import collections
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.linear_model import LinearRegression
+from sklearn import neighbors
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import PolynomialFeatures
 
 # housing dataset
 df = pd.read_csv("housing.csv")
 
 # California wild fires dataset
 df_wildfires = pd.read_csv("California_Fire_Incidents.csv")
+
+# **********************************************
+# *        EXPLORATORY DATA ANALYSIS           *
+# **********************************************
 
 print("\nGeneral information housing.csv:")
 print("--------------------------------------------------")
@@ -32,7 +41,9 @@ print("\nOcean proximity value counts:")
 print("--------------------------------")
 print(df["ocean_proximity"].value_counts())
 
-# Data Wrangling  (30 points)
+# **********************************************
+# *              DATA WRANGLING                *
+# **********************************************
 
 # Reshaping the table
 df_wildfires.drop(columns=['AirTankers',
@@ -80,7 +91,7 @@ df.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,
 plt.legend()
 plt.show()
 
-# Identify and Mitigate Outliers:  (40 points)
+# Identify and Mitigate Outliers
 
 # Outliers analysis
 df.hist(bins=50, figsize=(20, 15))
@@ -111,6 +122,50 @@ ax.set_xlabel('median_house_value')
 ax.set_ylabel('median_income')
 plt.show()
 
+# Scatter plot
+fig, ax = plt.subplots(figsize=(18, 10))
+ax.scatter(df['median_house_value'], df['population'])
+
+# x-axis label
+ax.set_xlabel('median_house_value')
+
+# y-axis label
+ax.set_ylabel('population')
+plt.show()
+
+# Scatter plot
+fig, ax = plt.subplots(figsize=(18, 10))
+ax.scatter(df['median_house_value'], df['total_rooms'])
+
+# x-axis label
+ax.set_xlabel('median_house_value')
+
+# y-axis label
+ax.set_ylabel('total_rooms')
+plt.show()
+
+# Scatter plot
+fig, ax = plt.subplots(figsize=(18, 10))
+ax.scatter(df['housing_median_age'], df['total_rooms'])
+
+# x-axis label
+ax.set_xlabel('house_median_age')
+
+# y-axis label
+ax.set_ylabel('total_rooms')
+plt.show()
+
+# Scatter plot
+fig, ax = plt.subplots(figsize=(18, 10))
+ax.scatter(df['median_house_value'], df['ocean_proximity'])
+
+# x-axis label
+ax.set_xlabel('median_house_value')
+
+# y-axis label
+ax.set_ylabel('population')
+plt.show()
+
 # dropping outliers
 drop_values = np.where(df['median_house_value'] > 400000)
 df.drop(drop_values[0], inplace=True)
@@ -128,4 +183,68 @@ ax.set_xlabel('median_house_value')
 
 # y-axis label
 ax.set_ylabel('median_income')
+plt.show()
+
+
+# scatter plot
+fig, ax = plt.subplots(figsize=(18, 10))
+ax.scatter(df['median_house_value'], df['housing_median_age'])
+
+# x-axis label
+ax.set_xlabel('median_house_value')
+
+# y-axis label
+ax.set_ylabel('housing_median_age')
+plt.show()
+
+
+# **********************************************
+# *                 MODELING                   *
+# **********************************************
+
+# ************** CLUSTERING ********************
+
+k_means = KMeans(n_clusters=4).fit(df[['median_house_value', 'housing_median_age']])
+centroids = k_means.cluster_centers_
+
+# Scatterplot for median_house_value & housing_median_age
+plt.scatter(df['median_house_value'], df['housing_median_age'], c=k_means.labels_.astype(float))
+plt.scatter(centroids[:, 0], centroids[:, 1], c='red')
+plt.title('K-means Number of clusters: 4')
+plt.show()
+
+
+k_means = KMeans(n_clusters=5).fit(df[['median_house_value', 'median_income']])
+centroids = k_means.cluster_centers_
+
+# Scatterplot for median_house_value & median_income
+plt.scatter(df['median_house_value'], df['median_income'], c=k_means.labels_.astype(float))
+plt.scatter(centroids[:, 0], centroids[:, 1], c='red')
+plt.title('K-means Number of clusters: 5')
+plt.show()
+
+# ************* LINEAL REGRESSION ******************
+X = df[['median_house_value']].values
+Y = df['median_income']
+
+# Linear model fitting and plotting
+model = LinearRegression()
+clf = model.fit(X, Y)
+print("\nLinear Regression")
+print("---------------------------------------")
+print('Coefficient:', clf.coef_)
+print('Y intercept:', clf.intercept_)
+print("")
+
+predictions = np.dot(X, clf.coef_)
+
+for index in range(len(predictions)):
+    predictions[index] += clf.intercept_
+
+# Plotting of the linear model
+plt.scatter(X, Y, c='black', marker='+')
+plt.title("Linear Regression")
+plt.ylabel("Density")
+plt.xlabel("fixed acidity")
+plt.plot(X, predictions, c='red')
 plt.show()
